@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM from Scratch - Part1: Statistical Language Model</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --card: #161b22;
+    --border: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --green: #3fb950;
+    --orange: #d29922;
+    --red: #f85149;
+    --purple: #bc8cff;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 2rem;
+    max-width: 960px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 2rem; margin-bottom: 0.5rem; }
+  h1 span { color: var(--accent); }
+  .subtitle { color: var(--muted); margin-bottom: 2rem; font-size: 1.1rem; }
+  h2 {
+    font-size: 1.4rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid var(--border);
+  }
+  h2 .step-badge {
+    display: inline-block;
+    background: var(--accent);
+    color: var(--bg);
+    padding: 2px 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 1.2rem 1.5rem;
+    margin-bottom: 1rem;
+  }
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    user-select: none;
+  }
+  .card-header h3 { font-size: 1.05rem; }
+  .card-header .lang {
+    font-size: 0.8rem;
+    padding: 2px 8px;
+    border-radius: 10px;
+    font-weight: 600;
+  }
+  .lang-c { background: #555d6e; color: #fff; }
+  .lang-py { background: #3572a5; color: #fff; }
+  .toggle { color: var(--muted); font-size: 1.2rem; transition: transform 0.2s; }
+  .card.open .toggle { transform: rotate(90deg); }
+  .card-body {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+  }
+  .card.open .card-body { display: block; }
+  pre {
+    background: #0d1117;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 1rem;
+    overflow-x: auto;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    margin: 0.8rem 0;
+  }
+  code { font-family: 'Consolas', 'Monaco', monospace; }
+  .result-box {
+    background: #1c2128;
+    border-left: 3px solid var(--green);
+    padding: 0.8rem 1rem;
+    margin: 0.8rem 0;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+  }
+  .result-box.warn { border-left-color: var(--orange); }
+  .result-box.info { border-left-color: var(--accent); }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 0.8rem 0;
+    font-size: 0.9rem;
+  }
+  th, td {
+    padding: 8px 12px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  th { color: var(--muted); font-weight: 600; }
+  .stat { color: var(--green); font-weight: 600; }
+  .flow {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+    margin: 1rem 0;
+  }
+  .flow-item {
+    background: var(--card);
+    border: 1px solid var(--border);
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    white-space: nowrap;
+  }
+  .flow-item.active { border-color: var(--accent); color: var(--accent); }
+  .flow-arrow { color: var(--muted); font-size: 1.2rem; }
+  .timeline {
+    position: relative;
+    padding-left: 2rem;
+    margin: 1.5rem 0;
+  }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: var(--border);
+  }
+  .timeline-item {
+    position: relative;
+    margin-bottom: 1.5rem;
+  }
+  .timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -2rem;
+    top: 8px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: var(--green);
+    border: 2px solid var(--bg);
+  }
+  .timeline-item h4 { font-size: 0.95rem; margin-bottom: 0.3rem; }
+  .timeline-item p { color: var(--muted); font-size: 0.85rem; }
+  .footer {
+    margin-top: 3rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 0.85rem;
+    text-align: center;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin: 1rem 0;
+  }
+  @media (max-width: 600px) {
+    .compare-grid { grid-template-columns: 1fr; }
+    body { padding: 1rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1><span>LLM from Scratch</span> - Part1</h1>
+<p class="subtitle">Claude Code (Opus)와 함께 통계적 언어 모델(N-gram)을 밑바닥부터 구현하는 과정</p>
+<div class="result-box info" style="margin-bottom:1.5rem;">
+  <strong>AI 활용 프로그래밍 프로젝트</strong> &mdash;
+  Claude Code의 Opus 모델을 활용하여 코드 작성, 개념 논의, 결과 분석을 진행합니다.
+  C/Python은 구현 도구이며, AI와의 협업이 프로젝트의 핵심 방법론입니다.
+</div>
+
+<div class="flow">
+  <span class="flow-item">글자 빈도</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item">유니그램</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item">바이그램</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item">트라이그램</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item">N-gram 문장</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item active">형태소 토큰화</span>
+  <span class="flow-arrow">&rarr;</span>
+  <span class="flow-item" style="opacity:0.5">신경망 (예정)</span>
+</div>
+
+<!-- ===== Step 0 ===== -->
+<h2><span class="step-badge">Step 0</span> Hello World</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>hello.c - 환경 세팅 확인</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>C 컴파일러(cl.exe) 동작 확인 + <code>fprintf</code>로 파일 출력.</p>
+    <div class="result-box">Hello World 출력 + output.txt 생성 확인</div>
+  </div>
+</div>
+
+<!-- ===== Step 1 ===== -->
+<h2><span class="step-badge">Step 1</span> 한글 글자 빈도 분석</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>step01_charfreq.c - UTF-8 직접 구현</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>국립국어원 표준국어대사전 <strong>424,155개 단어</strong>에서 한글 완성형(U+AC00~U+D7A3) 글자별 빈도를 분석.</p>
+    <p>UTF-8 바이트 시퀀스를 C에서 직접 디코딩하여 코드포인트로 변환. Python 교차 검증으로 결과 일치 확인.</p>
+    <table>
+      <tr><th>순위</th><th>글자</th><th>빈도</th><th>비율</th></tr>
+      <tr><td>1</td><td>다</td><td class="stat">76,828</td><td>4.91%</td></tr>
+      <tr><td>2</td><td>하</td><td class="stat">48,646</td><td>3.11%</td></tr>
+      <tr><td>3</td><td>이</td><td class="stat">26,053</td><td>1.66%</td></tr>
+      <tr><td>4</td><td>기</td><td class="stat">25,650</td><td>1.64%</td></tr>
+      <tr><td>5</td><td>리</td><td class="stat">24,245</td><td>1.55%</td></tr>
+    </table>
+    <div class="result-box info">사전 표제어 빈도(다 1위)와 텍스트 코퍼스 빈도(이 1위)는 다름 - 데이터 소스에 따른 자연스러운 차이</div>
+  </div>
+</div>
+
+<!-- ===== Step 2 ===== -->
+<h2><span class="step-badge">Step 2</span> 유니그램 샘플링</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>유니그램으로 텍스트 생성 - 한계 확인</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>글자 빈도를 확률 분포로 변환 &rarr; 누적 확률 테이블 구축 &rarr; 랜덤 샘플링.</p>
+    <p>두 가지 방식으로 구현:</p>
+    <ul style="margin: 0.5rem 0 0.5rem 1.5rem; color: var(--muted);">
+      <li>gen1: output_charfreq.txt 파싱 방식</li>
+      <li>gen2: words_only.txt 직접 카운팅 방식</li>
+    </ul>
+    <div class="result-box warn">결과: 의미 없는 글자 나열 &mdash; 유니그램은 글자 간 관계를 전혀 모름</div>
+  </div>
+</div>
+
+<!-- ===== Step 3 ===== -->
+<h2><span class="step-badge">Step 3</span> 바이그램 모델</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>4단계 발전: gen &rarr; word &rarr; bos_eos &rarr; verify</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <div class="timeline">
+      <div class="timeline-item">
+        <h4>gen - 고정 길이 글자 스트림</h4>
+        <p>직전 1글자 &rarr; 다음 글자 예측. 200자 연속 생성 (단어 경계 없음)</p>
+      </div>
+      <div class="timeline-item">
+        <h4>word - EOS 토큰 도입</h4>
+        <p>CP_END(EOS) 토큰으로 단어 단위 생성 가능. freq_start[] 별도 배열로 시작 분포 관리</p>
+      </div>
+      <div class="timeline-item">
+        <h4>bos_eos - BOS/EOS 통합</h4>
+        <p>CP_BOS/CP_EOS를 BigramTable에 통합 &rarr; 생성 루프 단순화 + CSV 출력 (131,853행)</p>
+      </div>
+      <div class="timeline-item">
+        <h4>verify - 사전 대조 검증</h4>
+        <p>42만 단어 해시셋 &rarr; 생성 단어와 완전 일치 비교</p>
+      </div>
+    </div>
+    <div class="result-box">사전 적중률: 30개 중 <strong>~50%</strong> &mdash; 짧은 단어는 잘 맞지만 길어질수록 하락</div>
+  </div>
+</div>
+
+<!-- ===== Step 4 ===== -->
+<h2><span class="step-badge">Step 4</span> 트라이그램 모델</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>컨텍스트 1글자 &rarr; 2글자 확장</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>바이그램 대비 핵심 변경:</p>
+    <table>
+      <tr><th>항목</th><th>바이그램</th><th>트라이그램</th></tr>
+      <tr><td>키</td><td>코드포인트 1개</td><td>(cp1, cp2) 쌍</td></tr>
+      <tr><td>BOS 패딩</td><td>1개</td><td>2개 (N-1개)</td></tr>
+      <tr><td>해시 테이블</td><td>8,192</td><td>131,071</td></tr>
+      <tr><td>CSV 행</td><td>131,853</td><td>360,575</td></tr>
+    </table>
+    <div class="result-box">사전 적중률: 1000개 중 <strong>77.3%</strong> &mdash; 바이그램 ~50% 대비 큰 향상</div>
+  </div>
+</div>
+
+<!-- ===== Step 5 ===== -->
+<h2><span class="step-badge">Step 5</span> N-gram 문장 생성</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>소설 코퍼스 + 3/5/7-gram 비교</h3>
+    <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>사전(단어) &rarr; <strong>소설 코퍼스(문장)</strong>로 확장. 데이터: 번역 SF 소설 35,034문장, 190만 글자.</p>
+    <p>모든 문자(공백, 쉼표, 마침표)를 동등한 토큰으로 처리. 자료구조를 N 가변으로 일반화.</p>
+    <table>
+      <tr><th>N-gram</th><th>컨텍스트 수</th><th>생성 품질</th></tr>
+      <tr><td>3-gram</td><td>37,921</td><td>단어 경계 불안정, 문법 파괴</td></tr>
+      <tr><td>5-gram</td><td>480,542</td><td>어절 자연스러움, 절 간 연결 끊김</td></tr>
+      <tr><td>7-gram</td><td>1,146,338</td><td>원문급이지만 과적합(암기)</td></tr>
+    </table>
+    <div class="result-box warn">
+      <strong>N-gram 근본 한계 확인:</strong><br>
+      N&uarr; &rarr; 품질&uarr; 이지만 원문 암기 (과적합)<br>
+      N&darr; &rarr; 장거리 의존성 불가<br>
+      데이터 증가로도 해결 불가 &rarr; <strong>신경망 전환 동기</strong>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Step 6 ===== -->
+<h2><span class="step-badge">Step 6</span> 형태소 토큰화 + 형태소 N-gram</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>6-1. Kiwi 형태소 분석</h3>
+    <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>글자 단위 &rarr; <strong>형태소 단위</strong>로 토큰 크기 전환. kiwipiepy 라이브러리 사용.</p>
+    <pre><code>"랄프는 울었습니다"
+&rarr; [랄프, 는, &lt;SP&gt;, 울, 었, 습니다]
+
+&lt;SP&gt; 토큰: 원문의 공백 위치를 보존하여 N-gram에서 띄어쓰기도 학습</code></pre>
+    <p>종성 자모 후처리: <code>크 &#x11AB;</code> &rarr; <code>큰</code>, <code>하 &#x11AF;</code> &rarr; <code>할</code></p>
+    <div class="result-box">1,476,464 토큰 (어휘 16,640개) &mdash; 글자 대비 시퀀스 길이 22% 감소</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>6-2. 토큰 ID 시퀀스</h3>
+    <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>LLM은 문자열이 아닌 <strong>정수 ID</strong>를 입력받음. 이 구조를 도입:</p>
+    <pre><code>[랄프, 는, &lt;SP&gt;, 울, 었, 습니다]
+&rarr; [360, 8, 3, 164, 6, 37]
+
+특수 토큰: PAD(0), BOS(1), EOS(2), &lt;SP&gt;(3)</code></pre>
+    <p>빈도순으로 ID 부여 &mdash; 자주 쓰는 토큰이 작은 ID를 받음.</p>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>6-3. 형태소 N-gram 비교 (3/5/7/10)</h3>
+    <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p>같은 N에서 형태소 단위는 글자 대비 <strong>2~3배 넓은 범위</strong>를 커버:</p>
+    <div class="compare-grid">
+      <div>
+        <h4 style="color:var(--muted);font-size:0.85rem;">글자 5-gram (Step 5)</h4>
+        <pre><code>컨텍스트: 직전 4글자
+"커크 선장을 기계에서 가장 묻고
+있는지 알게 되었다."</code></pre>
+      </div>
+      <div>
+        <h4 style="color:var(--muted);font-size:0.85rem;">형태소 5-gram (Step 6)</h4>
+        <pre><code>컨텍스트: 직전 4형태소 (~8-12글자)
+"당신은 로봇 놈아! 손대지 말게.
+구리를 고스란히 백 퍼센트 에너지로
+바꿀 수가 없는 상태에서..."</code></pre>
+      </div>
+    </div>
+    <table>
+      <tr><th></th><th>글자 단위</th><th>형태소 단위</th></tr>
+      <tr><td>어휘 크기</td><td>~11,000</td><td>16,640</td></tr>
+      <tr><td>총 토큰</td><td>~190만</td><td>~148만</td></tr>
+      <tr><td>5-gram 범위</td><td>4글자</td><td>4형태소 (~8-12글자)</td></tr>
+    </table>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>6-4. 백오프(Backoff) 시연</h3>
+    <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
+  </div>
+  <div class="card-body">
+    <p><strong>백오프</strong>: 높은 N-gram에서 후보가 부족하면(과적합/암기) N을 낮춰서 후보를 늘리는 기법.</p>
+    <pre><code>10-gram 후보 1개 &rarr; 암기! &rarr; N을 낮춤
+ 7-gram 후보 3개 &rarr; 부족  &rarr; N을 더 낮춤
+ 5-gram 후보 15개 &rarr; 충분! &rarr; 여기서 샘플링</code></pre>
+    <div class="compare-grid">
+      <div>
+        <h4 style="color:var(--red);font-size:0.85rem;">백오프 없음 (10-gram 고정)</h4>
+        <div class="result-box warn" style="font-size:0.85rem;">
+          "돈을 주지 않으면 날이 새기 전에 너희들을 모두 죽이어버리겠다."<br>
+          <span style="color:var(--orange);">&rarr; 원문 그대로 재생 (암기)</span>
+        </div>
+      </div>
+      <div>
+        <h4 style="color:var(--green);font-size:0.85rem;">백오프 적용 (10&rarr;7&rarr;5&rarr;3)</h4>
+        <div class="result-box" style="font-size:0.85rem;">
+          "돈을 그만 두지 않았지만 말하었습니다."<br>
+          <span style="color:var(--green);">&rarr; 새로운 문장 생성</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== 데이터 ===== -->
+<h2>데이터</h2>
+<div class="card open">
+  <div class="card-body" style="border-top:none; margin-top:0; padding-top:0;">
+    <table>
+      <tr><th>데이터</th><th>경로</th><th>설명</th></tr>
+      <tr><td>사전</td><td><code>korean_dict/words_only.txt</code></td><td>국립국어원 표준국어대사전 424,155 단어</td></tr>
+      <tr><td>소설 코퍼스</td><td><code>data/data_all.txt</code></td><td>번역 SF 소설 35,034문장, 190만 글자</td></tr>
+      <tr><td>정제 코퍼스</td><td><code>step05_ngram_sentence/data_cleaned.txt</code></td><td>괄호/따옴표 제거 버전</td></tr>
+    </table>
+    <p style="color:var(--muted);font-size:0.85rem;margin-top:0.5rem;">
+      사전 출처: <a href="https://github.com/korean-word-game/db">korean-word-game/db</a>
+    </p>
+  </div>
+</div>
+
+<!-- ===== 기술 메모 ===== -->
+<h2>기술 메모</h2>
+<div class="card">
+  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+    <h3>개발 중 발견한 이슈들</h3>
+    <span class="toggle">&#9654;</span>
+  </div>
+  <div class="card-body">
+    <table>
+      <tr><th>이슈</th><th>해결</th></tr>
+      <tr><td>Windows CP949에서 UTF-8 출력 깨짐</td><td>C: <code>SetConsoleOutputCP(65001)</code> / Python: <code>sys.stdout</code> UTF-8 래핑</td></tr>
+      <tr><td>bash sort가 한글 UTF-8 손상</td><td>Python csv 모듈로 대체</td></tr>
+      <tr><td>cl.exe에서 한글 리터럴 깨짐</td><td><code>/utf-8</code> 플래그 필수</td></tr>
+      <tr><td>Kiwi 종성 자모 분리 (<code>크 &#x11AB;</code>)</td><td>유니코드 조합 공식으로 후처리 병합</td></tr>
+      <tr><td>사전 vs 코퍼스 빈도 차이</td><td>정상 현상 &mdash; 데이터 소스에 따라 다름</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- ===== 다음 단계 ===== -->
+<h2>다음 단계</h2>
+<div class="result-box info">
+  N-gram의 근본 한계를 확인 완료. 다음은 <strong>신경망</strong>으로 전환하여 임베딩, 순전파, 역전파를 구현할 예정.
+</div>
+
+<div class="footer">
+  <p>LLM from Scratch - Part1: Statistical Language Model (N-gram)</p>
+  <p>Built with <a href="https://claude.ai/claude-code">Claude Code (Opus)</a> | <a href="../../README.md">README</a> | <a href="https://github.com/korean-word-game/db">Data Source</a></p>
+</div>
+
+<script>
+// 첫 번째 카드만 기본 열림
+document.querySelector('.card').classList.add('open');
+</script>
+
+</body>
+</html>

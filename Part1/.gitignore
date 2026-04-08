@@ -1,0 +1,33 @@
+# C 컴파일 결과물
+*.obj
+*.exe
+*.o
+*.out
+*.pdb
+*.ilk
+*.exp
+*.lib
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.egg-info/
+dist/
+build/
+*.egg
+.venv/
+venv/
+env/
+
+# Claude Code 로컬 설정
+.claude/settings.local.json
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+Thumbs.db
+Desktop.ini
+.DS_Store

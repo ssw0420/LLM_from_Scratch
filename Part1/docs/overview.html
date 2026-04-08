@@ -59,8 +59,6 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    cursor: pointer;
-    user-select: none;
   }
   .card-header h3 { font-size: 1.05rem; }
   .card-header .lang {
@@ -71,15 +69,12 @@
   }
   .lang-c { background: #555d6e; color: #fff; }
   .lang-py { background: #3572a5; color: #fff; }
-  .toggle { color: var(--muted); font-size: 1.2rem; transition: transform 0.2s; }
-  .card.open .toggle { transform: rotate(90deg); }
+  .toggle { display: none; }
   .card-body {
-    display: none;
     margin-top: 1rem;
     padding-top: 1rem;
     border-top: 1px solid var(--border);
   }
-  .card.open .card-body { display: block; }
   pre {
     background: #0d1117;
     border: 1px solid var(--border);
@@ -213,7 +208,7 @@
 <!-- ===== Step 0 ===== -->
 <h2><span class="step-badge">Step 0</span> Hello World</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>hello.c - 환경 세팅 확인</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -226,7 +221,7 @@
 <!-- ===== Step 1 ===== -->
 <h2><span class="step-badge">Step 1</span> 한글 글자 빈도 분석</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>step01_charfreq.c - UTF-8 직접 구현</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -248,7 +243,7 @@
 <!-- ===== Step 2 ===== -->
 <h2><span class="step-badge">Step 2</span> 유니그램 샘플링</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>유니그램으로 텍스트 생성 - 한계 확인</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -266,7 +261,7 @@
 <!-- ===== Step 3 ===== -->
 <h2><span class="step-badge">Step 3</span> 바이그램 모델</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>4단계 발전: gen &rarr; word &rarr; bos_eos &rarr; verify</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -296,7 +291,7 @@
 <!-- ===== Step 4 ===== -->
 <h2><span class="step-badge">Step 4</span> 트라이그램 모델</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>컨텍스트 1글자 &rarr; 2글자 확장</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -316,7 +311,7 @@
 <!-- ===== Step 5 ===== -->
 <h2><span class="step-badge">Step 5</span> N-gram 문장 생성</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>소설 코퍼스 + 3/5/7-gram 비교</h3>
     <div><span class="lang lang-c">C</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -341,7 +336,7 @@
 <!-- ===== Step 6 ===== -->
 <h2><span class="step-badge">Step 6</span> 형태소 토큰화 + 형태소 N-gram</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>6-1. Kiwi 형태소 분석</h3>
     <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -357,7 +352,7 @@
 </div>
 
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>6-2. 토큰 ID 시퀀스</h3>
     <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -372,7 +367,7 @@
 </div>
 
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>6-3. 형태소 N-gram 비교 (3/5/7/10)</h3>
     <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -403,7 +398,7 @@
 </div>
 
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>6-4. 백오프(Backoff) 시연</h3>
     <div><span class="lang lang-py">Python</span> <span class="toggle">&#9654;</span></div>
   </div>
@@ -450,7 +445,7 @@
 <!-- ===== 기술 메모 ===== -->
 <h2>기술 메모</h2>
 <div class="card">
-  <div class="card-header" onclick="this.parentElement.classList.toggle('open')">
+  <div class="card-header">
     <h3>개발 중 발견한 이슈들</h3>
     <span class="toggle">&#9654;</span>
   </div>
@@ -477,10 +472,6 @@
   <p>Built with <a href="https://claude.ai/claude-code">Claude Code (Opus)</a> | <a href="https://github.com/ssw0420/LLM_from_Scratch#readme">README</a> | <a href="https://github.com/korean-word-game/db">Data Source</a></p>
 </div>
 
-<script>
-// 첫 번째 카드만 기본 열림
-document.querySelector('.card').classList.add('open');
-</script>
 
 </body>
 </html>

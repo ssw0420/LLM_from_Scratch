@@ -4,7 +4,7 @@
 
 **Part1**에서는 **통계적 언어 모델(N-gram)** 을 다룹니다. N-gram 모델을 글자 단위부터 형태소 단위까지 직접 구현하며, 통계적 접근의 원리와 한계를 체험합니다. 모든 과정은 **Claude Code (Opus)** 와의 AI 페어 프로그래밍으로 진행됩니다.
 
-> **[전체 진행 과정 보기 (HTML)](Part1/docs/overview.html)** — 각 Step별 코드, 결과물, 설계 의도를 한눈에 볼 수 있습니다.
+> **[전체 진행 과정 보기 (HTML)](https://ssw0420.github.io/LLM_from_Scratch/Part1/docs/overview.html)** — 각 Step별 코드, 결과물, 설계 의도를 한눈에 볼 수 있습니다.
 
 ## 결과 미리보기
 
@@ -38,7 +38,7 @@ N을 올리면 품질이 좋아지지만 원문을 암기하고, N을 내리면 
 | 5 | N-gram 문장 생성 | C | 소설 코퍼스, 3/5/7-gram 비교, 과적합 |
 | 6 | 형태소 토큰화 + N-gram | Python | Kiwi 형태소 분석, 토큰 ID, 백오프 |
 
-각 Step의 상세 내용은 [overview.html](Part1/docs/overview.html) 또는 [Part1/docs/](Part1/docs/) 폴더에서 확인할 수 있습니다.
+각 Step의 상세 내용은 [overview.html](https://ssw0420.github.io/LLM_from_Scratch/Part1/docs/overview.html) 또는 [Part1/docs/](Part1/docs/) 폴더에서 확인할 수 있습니다.
 
 ## 환경
 

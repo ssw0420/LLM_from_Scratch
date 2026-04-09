@@ -1,6 +1,8 @@
-# Part1 - Statistical Language Model (N-gram)
+# LLM from Scratch
 
 **Claude Code (Opus)를 활용하여** LLM(Large Language Model)을 밑바닥부터 만들어가는 프로젝트입니다. 홍정모 연구소의 **LLM from Scratch** 강의를 기반으로 진행합니다.
+
+### Part1 - Statistical Language Model (N-gram)
 
 **Part1**에서는 **통계적 언어 모델(N-gram)** 을 다룹니다. N-gram 모델을 글자 단위부터 형태소 단위까지 직접 구현하며, 통계적 접근의 원리와 한계를 체험합니다. 모든 과정은 **Claude Code (Opus)** 와의 AI 페어 프로그래밍으로 진행됩니다.
 
